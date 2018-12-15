@@ -1596,8 +1596,17 @@ class UnobservedComponentsResults(MLEResults):
                     label='Observed')
 
             # Get the predicted values and confidence intervals
-            predict = self.filter_results.forecasts[0]
-            std_errors = np.sqrt(self.filter_results.forecasts_error_cov[0, 0])
+            if which == 'filtered':
+                predict = self.filter_results.forecasts[0]
+                std_errors = np.sqrt(
+                    self.filter_results.forecasts_error_cov[0, 0]
+                )
+            else:
+                predict = self.smoother_results.forecasts[0]
+                std_errors = np.sqrt(
+                    self.filter_results.smoothed_forecasts_error_cov[0, 0]
+                )
+
             ci_lower = predict - critical_value * std_errors
             ci_upper = predict + critical_value * std_errors
 
