@@ -1559,7 +1559,7 @@ class FilterResults(FrozenRepresentation):
             self.M = np.array(kalman_filter.M, copy=True)
             self.M_diffuse = np.array(kalman_filter.M_inf, copy=True)
 
-        # Note: use forecasts rather than forecast, so as not to interfer
+        # Note: use forecasts rather than forecast, so as not to interfere
         # with the `forecast` methods in subclasses
         self.forecasts = np.array(kalman_filter.forecast, copy=True)
         self.forecasts_error = np.array(
