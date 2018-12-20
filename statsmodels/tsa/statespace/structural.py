@@ -1547,6 +1547,10 @@ class UnobservedComponentsResults(MLEResults):
         fig = create_mpl_fig(fig, figsize)
 
         # Determine which results we have
+        # TODO: There is a potential for an illegal state.
+        # If the user specifies 'smoothed' but they don't have a filter_result
+        # of type SmootherFilter, the logic to grab smoothed_forecasts and
+        # smoothed_forecasts_error_cov from smoothed will fail.
         if which is None:
             which = 'filtered' if self.smoothed_state is None else 'smoothed'
 
@@ -1595,16 +1599,28 @@ class UnobservedComponentsResults(MLEResults):
             ax.plot(dates[llb:], self.model.endog[llb:], color='k',
                     label='Observed')
 
-            # Get the predicted values and confidence intervals
-            if which == 'filtered':
+            # Get the predicted values and confidence intervals. If the user
+            # requests which == 'smoothed', try to get smoothed forecasts and
+            # smoothed forecasts_error_cov. If no smoother_filter attribute
+            # exists, warn user and fall back to filter_results.
+            if which == 'smoothed':
+                try:
+                    predict = self.smoother_results.smoothed_forecasts[0]
+                    std_errors = np.sqrt(
+                        self.smoother_results.smoothed_forecasts_error_cov[0, 0]
+                    )
+                except AttributeError:
+                    warn("which=='smoothed' was requested, but the"
+                         "smoother_results attribute doesn't exist on this "
+                         "model. Falling back to using filter_results.")
+                    predict = self.filter_results.forecasts[0]
+                    std_errors = np.sqrt(
+                        self.filter_results.forecasts_error_cov[0, 0]
+                    )
+            else:
                 predict = self.filter_results.forecasts[0]
                 std_errors = np.sqrt(
                     self.filter_results.forecasts_error_cov[0, 0]
-                )
-            else:
-                predict = self.smoother_results.forecasts[0]
-                std_errors = np.sqrt(
-                    self.filter_results.smoothed_forecasts_error_cov[0, 0]
                 )
 
             ci_lower = predict - critical_value * std_errors
